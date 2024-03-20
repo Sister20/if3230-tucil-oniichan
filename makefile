@@ -3,7 +3,7 @@ OUTPUT_FOLDER = bin
 all: serial parallel
 
 parallel:
-# TODO : Parallel compilation
+	mpic++ src/open-mpi/mpi.cc -o mpi.exe
 
 serial:
 	g++ src/serial/serial.cpp -o $(OUTPUT_FOLDER)/serial
