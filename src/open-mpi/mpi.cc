@@ -1,6 +1,7 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 using namespace std;
 
 int main(int argc, char **argv)
@@ -20,10 +21,10 @@ int main(int argc, char **argv)
 
   // Getting the matrix
   int mat_size = 3;
-  double matrix[mat_size][mat_size] = {
-      {5, 1, 1},
-      {1, 5, 1},
-      {1, 1, 5}};
+  double matrix[mat_size][mat_size * 2] = {
+      {5, 1, 1, 1, 0, 0},
+      {1, 5, 1, 0, 1, 0},
+      {1, 1, 5, 0, 0, 1}};
 
   // Getting the number elmt to receive
   int elmt_per_proc = mat_size / world_size;
@@ -33,9 +34,10 @@ int main(int argc, char **argv)
   for (int i = 0; i < mat_size; i++)
   {
     // main loop for calculating the matrix inverse
-    // Step 1: Divide the pivot row with the pivot elmt
+    // TODO: (Zaki) Step 1 - Divide the pivot row with the pivot elmt
 
-    // Step 2: make the upper and lower row to be 0 other than the pivot elmt 
+    // TODO: Step 2 - Make the upper and lower row to be 0 other than the pivot elmt
+     
     
   }
 
