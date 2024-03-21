@@ -6,6 +6,7 @@
 
 using namespace std;
 
+// Display a 2d matrix
 void printMatrix(double *matrix, int count_width, int count_row)
 {
   for (int i = 0; i < count_row; i++)
@@ -100,10 +101,12 @@ int main(int argc, char **argv)
   // Init Receive Buffer (this part is independent from each process)
   double bcastbuff_step1 = {0};
   double *recvbuff_step1 = (double *)malloc(array_per_proc[proc_rank] * count_y * sizeof(double));
-  ;
-  double recvbuff_step2[array_per_proc[proc_rank]][count_y] = {0};
 
-  for (int pivot = 0; pivot < 1; pivot++)
+  // Receive buffer for the second step
+  double bcastbuff_step2[count_y] = {0};
+  double *recvbuff_step2 = (double *) malloc(array_per_proc[proc_rank] * count_y * sizeof(double));
+
+  for (int pivot = 0; pivot < mat_size; pivot++)
   {
     // Step 1 - Divide the all row with the pivot elmt
     if (proc_rank == rootproc)
@@ -111,8 +114,8 @@ int main(int argc, char **argv)
       // init bcast buffer
       bcastbuff_step1 = *(matrix + (pivot * count_y + pivot));
       // DEBUG purposes only
-      cout << "matrix 0" << endl;
-      printMatrix(matrix, 6, 3);
+      // cout << "matrix 0" << endl;
+      // printMatrix(matrix, 6, 3);
       
     }
     MPI_Bcast(&bcastbuff_step1, 1, MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
@@ -120,17 +123,37 @@ int main(int argc, char **argv)
 
     for (int i = 0; i < array_per_proc[proc_rank]; i++)
     {
+      if (array_offset[proc_rank] + i != pivot) continue;
       for (int j = 0; j < count_y; j++)
       {
         *(recvbuff_step1 + i * count_y + j) = *(recvbuff_step1 + i * count_y + j) / bcastbuff_step1;
       }
-      cout << endl;
     }
     MPI_Gatherv(recvbuff_step1, elmt_per_proc[proc_rank], MPI_DOUBLE, matrix, elmt_per_proc, elmt_offset, MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
 
     // TODO: Step 2 - Make the upper and lower row to be 0 other than the pivot elmt
-    // MPI_Scatterv(matrix, elmt_per_proc, elmt_offset, MPI_DOUBLE, &recvbuff_step2, elmt_per_proc[proc_rank], MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
+    // Prepare pivot row
+    if (proc_rank == rootproc) {
+      memcpy(bcastbuff_step2, matrix + (pivot * count_y), count_y * sizeof(double));
+    }
 
+    // Broadcast pivot row and scatter the rest
+    MPI_Bcast(&bcastbuff_step2, count_y, MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
+    MPI_Scatterv(matrix, elmt_per_proc, elmt_offset, MPI_DOUBLE, recvbuff_step2, elmt_per_proc[proc_rank], MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
+    
+    // Do the substraction operation with the pivot row
+    for (int i = 0; i < array_per_proc[proc_rank]; i++)
+    {
+      if (array_offset[proc_rank] + i == pivot) continue;
+      double multiplier = *(recvbuff_step2 + i * count_y + pivot) / *(bcastbuff_step2 + pivot);
+      for (int j = 0; j < count_y; j++)
+      {
+        *(recvbuff_step2 + i * count_y + j) = *(recvbuff_step2 + i * count_y + j) - (*(bcastbuff_step2 + j) * multiplier);
+      }
+    }
+
+    // Gather the row back together
+    MPI_Gatherv(recvbuff_step2, elmt_per_proc[proc_rank], MPI_DOUBLE, matrix, elmt_per_proc, elmt_offset, MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
 
     // DEBUG purposes only
     if (proc_rank == rootproc)
