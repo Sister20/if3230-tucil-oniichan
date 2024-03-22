@@ -6,6 +6,37 @@
 
 using namespace std;
 
+void readfile(double ***mat, int *size) {
+  cin >> *size;
+
+  *mat = new double*[*size];
+  for (int i = 0; i < *size; i++) {
+    (*mat)[i] = new double[2 * (*size)]();
+  }
+
+  for(int i = 0; i < *size; i++) {
+    for(int j = 0; j < *size; j++) {
+      cin >> (*mat)[i][j];
+    }
+  }
+
+  for(int i = 0; i < *size; i++) {
+    for(int j = *size; j < (*size) * 2; j++) {
+      if (i + *size == j) {
+        (*mat)[i][j] = 1;
+      }
+      else {
+        (*mat)[i][j] = 0;
+      }
+    }
+  }
+  
+}
+
+void clear(double **mat) {
+  free(mat);
+}
+
 // Display a 2d matrix
 void printMatrix(double *matrix, int count_width, int count_row)
 {
@@ -166,3 +197,23 @@ int main(int argc, char **argv)
   MPI_Finalize();
   return 0;
 }
+
+/*
+int main () {
+  double **mat;
+  int size;
+
+  readfile(&mat, &size);
+
+  for (int i = 0; i < size; i++) {
+    for (int j = 0; j < size * 2; j++) {
+      cout << mat[i][j] << " ";
+    }
+    cout << endl;
+  }
+
+  clear(mat);
+
+  return 0;
+}
+*/
