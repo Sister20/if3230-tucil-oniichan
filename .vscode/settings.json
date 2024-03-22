@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.sql": "postgres",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "ostream": "cpp"
     }
 }
