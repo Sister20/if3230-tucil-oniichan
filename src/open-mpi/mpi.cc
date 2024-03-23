@@ -104,34 +104,42 @@ void setupRecvCountStep2(int *array_per_proc, int *elmt_per_proc, int world_size
   }
 }
 
-void setupOffsetStep1(int *elmt_offset, int elmt_per_proc[], int world_size)
-{
-  for (int i = 0; i < world_size; i++)
-  {
-    if (i == 0)
-    {
-      elmt_offset[i] = 0;
-    }
-    else
-    {
-      elmt_offset[i] = elmt_offset[i - 1] + elmt_per_proc[i - 1];
-    }
-  }
-}
+// void setupRecvCount(int *array_per_proc, int *elmt_per_proc_step1, int *elmt_per_proc_step2, int world_size, int mat_size, int remainder_step1, int ideal_array_per_proc_step1, int remainder_step2, int ideal_array_per_proc_step2) {
+//   for (int i = 0; i < world_size; i++)
+//   {
+//     if (i < remainder_step2)
+//     {
+//       array_per_proc[i] = ideal_array_per_proc_step2 + 1;
+//     }
+//     else
+//     {
+//       array_per_proc[i] = ideal_array_per_proc_step2;
+//     }
 
-void setupOffsetStep2(int *array_offset, int *elmt_offset, int array_per_proc[], int world_size, int mat_size)
-{
+//     if (i < remainder_step1) {
+//       elmt_per_proc_step1[i] = ideal_array_per_proc_step1 + 1;
+//     } else {
+//       elmt_per_proc_step1[i] = ideal_array_per_proc_step1;
+//     }
+
+//     elmt_per_proc_step2[i] = array_per_proc[i] * mat_size * 2;
+//   }
+// }
+
+void setupOffset(int *array_offset, int *elmt_offset_step2, int *elmt_offset_step1, int array_per_proc[], int world_size, int mat_size) {
   for (int i = 0; i < world_size; i++)
   {
     if (i == 0)
     {
       array_offset[i] = 0;
+      elmt_offset_step1[i] = 0;
     }
     else
     {
       array_offset[i] = array_offset[i - 1] + array_per_proc[i - 1];
+      elmt_offset_step1[i] = elmt_offset_step1[i - 1] + array_per_proc[i - 1];
     }
-    elmt_offset[i] = array_offset[i] * mat_size * 2;
+    elmt_offset_step2[i] = array_offset[i] * mat_size * 2;
   }
 }
 
@@ -227,13 +235,13 @@ int main(int argc, char **argv)
   int array_per_proc[world_size] = {0};
   int elmt_per_proc[world_size] = {0};
   setupRecvCountStep2(array_per_proc, elmt_per_proc, world_size, mat_size, remainder, ideal_array_per_proc);
+  // setupRecvCount(array_per_proc, elmt_per_proc_step1, elmt_per_proc, world_size, mat_size, remainder_step1, ideal_array_per_proc_step1, remainder, ideal_array_per_proc);
 
   // setup the offset
   int elmt_offset_step1[world_size] = {0};
-  setupOffsetStep1(elmt_offset_step1, elmt_per_proc_step1, world_size);
   int array_offset[world_size] = {0};
   int elmt_offset[world_size] = {0};
-  setupOffsetStep2(array_offset, elmt_offset, array_per_proc, world_size, mat_size);
+  setupOffset(array_offset, elmt_offset, elmt_offset_step1, array_per_proc, world_size, mat_size);
 
   // Init Receive Buffer (this part is independent from each process)
   double bcastbuff_step1;
@@ -306,26 +314,7 @@ int main(int argc, char **argv)
     cout << endl;
   }
 
+
   MPI_Finalize();
   return 0;
 }
-
-/*
-int main () {
-  double **mat;
-  int size;
-
-  readfile(&mat, &size);
-
-  for (int i = 0; i < size; i++) {
-    for (int j = 0; j < size * 2; j++) {
-      cout << mat[i][j] << " ";
-    }
-    cout << endl;
-  }
-
-  clear(mat);
-
-  return 0;
-}
-*/
