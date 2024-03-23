@@ -86,7 +86,7 @@ int main()
         }
     }
     
-    cout << double(clock() - start) / CLOCKS_PER_SEC * 1000 << endl;
+    cout << double(clock() - start) / CLOCKS_PER_SEC << endl;
     cout << n << endl;
     for(i=0; i < n; ++i)
     {

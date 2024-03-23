@@ -7,45 +7,6 @@
 
 using namespace std;
 
-void readfile(double ***mat, int *size)
-{
-  cin >> *size;
-
-  *mat = new double *[*size];
-  for (int i = 0; i < *size; i++)
-  {
-    (*mat)[i] = new double[2 * (*size)]();
-  }
-
-  for (int i = 0; i < *size; i++)
-  {
-    for (int j = 0; j < *size; j++)
-    {
-      cin >> (*mat)[i][j];
-    }
-  }
-
-  for (int i = 0; i < *size; i++)
-  {
-    for (int j = *size; j < (*size) * 2; j++)
-    {
-      if (i + *size == j)
-      {
-        (*mat)[i][j] = 1;
-      }
-      else
-      {
-        (*mat)[i][j] = 0;
-      }
-    }
-  }
-}
-
-void clear(double **mat)
-{
-  free(mat);
-}
-
 // Display a 2d matrix
 void printMatrix(double *matrix, int count_width, int count_row, int res)
 {
@@ -73,60 +34,34 @@ void printMatrix(double *matrix, int count_width, int count_row, int res)
   }
 }
 
-void setupRecvCountStep1(int *elmt_per_proc_step1, int ideal_elmt_per_proc_step1, int remainder_elmt_per_proc_step1, int world_size)
+void setupRecvCount(int *array_per_proc, int *elmt_per_proc_step1, int *elmt_per_proc_step2, int world_size, int mat_size, int remainder_step1, int ideal_array_per_proc_step1, int remainder_step2, int ideal_array_per_proc_step2)
 {
-  for (int i = world_size; i >= 0; i--)
+  for (int i = 0; i < world_size; i++)
   {
-    if (i < remainder_elmt_per_proc_step1)
+    if (i >= world_size - remainder_step2)
     {
-      elmt_per_proc_step1[i] = ideal_elmt_per_proc_step1 + 1;
+      array_per_proc[i] = ideal_array_per_proc_step2 + 1;
     }
     else
     {
-      elmt_per_proc_step1[i] = ideal_elmt_per_proc_step1;
+      array_per_proc[i] = ideal_array_per_proc_step2;
     }
-  }
-}
 
-void setupRecvCountStep2(int *array_per_proc, int *elmt_per_proc, int world_size, int mat_size, int remainder, int ideal_array_per_proc)
-{
-  for (int i = world_size; i >= 0; i--)
-  {
-    if (i < remainder)
+    if (i >= world_size - remainder_step1)
     {
-      array_per_proc[i] = ideal_array_per_proc + 1;
+      elmt_per_proc_step1[i] = ideal_array_per_proc_step1 + 1;
     }
     else
     {
-      array_per_proc[i] = ideal_array_per_proc;
+      elmt_per_proc_step1[i] = ideal_array_per_proc_step1;
     }
-    elmt_per_proc[i] = array_per_proc[i] * mat_size * 2;
+
+    elmt_per_proc_step2[i] = array_per_proc[i] * mat_size * 2;
   }
 }
 
-// void setupRecvCount(int *array_per_proc, int *elmt_per_proc_step1, int *elmt_per_proc_step2, int world_size, int mat_size, int remainder_step1, int ideal_array_per_proc_step1, int remainder_step2, int ideal_array_per_proc_step2) {
-//   for (int i = 0; i < world_size; i++)
-//   {
-//     if (i < remainder_step2)
-//     {
-//       array_per_proc[i] = ideal_array_per_proc_step2 + 1;
-//     }
-//     else
-//     {
-//       array_per_proc[i] = ideal_array_per_proc_step2;
-//     }
-
-//     if (i < remainder_step1) {
-//       elmt_per_proc_step1[i] = ideal_array_per_proc_step1 + 1;
-//     } else {
-//       elmt_per_proc_step1[i] = ideal_array_per_proc_step1;
-//     }
-
-//     elmt_per_proc_step2[i] = array_per_proc[i] * mat_size * 2;
-//   }
-// }
-
-void setupOffset(int *array_offset, int *elmt_offset_step2, int *elmt_offset_step1, int array_per_proc[], int world_size, int mat_size) {
+void setupOffset(int *array_offset, int *elmt_offset_step2, int *elmt_offset_step1, int array_per_proc[], int elmt_per_proc_step1[], int world_size, int mat_size)
+{
   for (int i = 0; i < world_size; i++)
   {
     if (i == 0)
@@ -137,7 +72,7 @@ void setupOffset(int *array_offset, int *elmt_offset_step2, int *elmt_offset_ste
     else
     {
       array_offset[i] = array_offset[i - 1] + array_per_proc[i - 1];
-      elmt_offset_step1[i] = elmt_offset_step1[i - 1] + array_per_proc[i - 1];
+      elmt_offset_step1[i] = elmt_offset_step1[i - 1] + elmt_per_proc_step1[i - 1];
     }
     elmt_offset_step2[i] = array_offset[i] * mat_size * 2;
   }
@@ -210,10 +145,6 @@ int main(int argc, char **argv)
         }
       }
     }
-
-    // memcpy(matrix, test_matrix, count_x * count_y * sizeof(double));
-
-    // printMatrix(matrix, count_y, count_x);
   }
 
   MPI_Barrier(MPI_COMM_WORLD);
@@ -224,24 +155,22 @@ int main(int argc, char **argv)
   count_y = mat_size * 2;
 
   // Getting the number elmt to send and receive
-  int ideal_array_per_proc_step1 = count_y / world_size;
+  int ideal_elmt_per_proc_step1 = count_y / world_size;
   int remainder_step1 = count_y % world_size;
 
   int ideal_array_per_proc = mat_size / world_size;
   int remainder = mat_size % world_size;
 
   int elmt_per_proc_step1[world_size] = {0};
-  setupRecvCountStep1(elmt_per_proc_step1, ideal_array_per_proc_step1, remainder_step1, world_size);
   int array_per_proc[world_size] = {0};
   int elmt_per_proc[world_size] = {0};
-  setupRecvCountStep2(array_per_proc, elmt_per_proc, world_size, mat_size, remainder, ideal_array_per_proc);
-  // setupRecvCount(array_per_proc, elmt_per_proc_step1, elmt_per_proc, world_size, mat_size, remainder_step1, ideal_array_per_proc_step1, remainder, ideal_array_per_proc);
+  setupRecvCount(array_per_proc, elmt_per_proc_step1, elmt_per_proc, world_size, mat_size, remainder_step1, ideal_elmt_per_proc_step1, remainder, ideal_array_per_proc);
 
   // setup the offset
   int elmt_offset_step1[world_size] = {0};
   int array_offset[world_size] = {0};
   int elmt_offset[world_size] = {0};
-  setupOffset(array_offset, elmt_offset, elmt_offset_step1, array_per_proc, world_size, mat_size);
+  setupOffset(array_offset, elmt_offset, elmt_offset_step1, array_per_proc, elmt_per_proc_step1, world_size, mat_size);
 
   // Init Receive Buffer (this part is independent from each process)
   double bcastbuff_step1;
@@ -308,12 +237,14 @@ int main(int argc, char **argv)
 
   if (proc_rank == rootproc)
   {
-    cout << double(clock() - start) / CLOCKS_PER_SEC * 1000 << endl;
+    cout << double(clock() - start) / CLOCKS_PER_SEC << endl;
     cout << mat_size << endl;
     printMatrix(matrix, count_y, count_x, 1);
     cout << endl;
+    free(matrix);
+    free(recvbuff_step1);
+    free(recvbuff_step2);
   }
-
 
   MPI_Finalize();
   return 0;
