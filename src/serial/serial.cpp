@@ -5,6 +5,7 @@
  **/
 
 #include<iostream>
+#include <ctime>
 using namespace std;
 
 int main()
@@ -42,6 +43,8 @@ int main()
             }
         }
     }
+    
+    clock_t start = clock();
     
     // Partial pivoting
     for(i = n; i > 1; --i)
@@ -83,15 +86,16 @@ int main()
         }
     }
     
-    // cout << n << endl;
-    // for(i=0; i < n; ++i)
-    // {
-    //     for(j = n; j < 2*n; ++j)
-    //     {
-    //         cout << mat[i][j] << " ";
-    //     }
-    //     cout << endl;
-    // }
+    cout << double(clock() - start) / CLOCKS_PER_SEC * 1000 << endl;
+    cout << n << endl;
+    for(i=0; i < n; ++i)
+    {
+        for(j = n; j < 2*n; ++j)
+        {
+            cout << mat[i][j] << " ";
+        }
+        cout << endl;
+    }
     
     // Deleting the memory allocated
     for (i = 0; i < n; ++i)
