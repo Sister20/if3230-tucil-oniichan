@@ -1,3 +1,5 @@
+MPI_CC = mpicc
+THREADS = 2
 OUTPUT_FOLDER = bin
 
 all: serial parallel

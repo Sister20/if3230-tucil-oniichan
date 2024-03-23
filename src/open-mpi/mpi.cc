@@ -52,8 +52,9 @@ void printMatrix(double *matrix, int count_width, int count_row)
   {
     for (int j = 0; j < count_width; j++)
     {
-      cout << *(matrix + j + i * 6) << " ";
-      if (j == (count_width / 2)-1) {
+      cout << *(matrix + j + i * count_width) << " ";
+      if (j == (count_width / 2) - 1)
+      {
         cout << "|";
       }
     }
@@ -139,7 +140,7 @@ int main(int argc, char **argv)
   int rootproc = 0;
 
   // Getting the matrix size
-  int mat_size = 3;
+  int mat_size = 8;
   int count_x = mat_size;
   int count_y = mat_size * 2;
 
@@ -150,12 +151,49 @@ int main(int argc, char **argv)
   {
     // getting the matrix
     // TODO: Change it using the parser lib when done
+    cin >> mat_size;
     matrix = (double *)malloc(count_x * count_y * sizeof(double));
-    double test_matrix[mat_size][6] = {{5, 1, 1, 1, 0, 0},
-                                       {1, 5, 1, 0, 1, 0},
-                                       {1, 1, 5, 0, 0, 1}};
-    memcpy(matrix, test_matrix, count_x * count_y * sizeof(double));
+
+    // double test_matrix[count_x][count_y] = {
+    //   {0.911, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0},
+    //   {1, 0.911, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0},
+    //   {1, 1, 0.911, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0},
+    //   {1, 1, 1, 0.911, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0},
+    //   {1, 1, 1, 1, 0.911, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0},
+    //   {1, 1, 1, 1, 1, 0.911, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0},
+    //   {1, 1, 1, 1, 1, 1, 0.911, 1, 0, 0, 0, 0, 0, 0, 1, 0},
+    //   {1, 1, 1, 1, 1, 1, 1, 0.911, 0, 0, 0, 0, 0, 0, 0, 1}
+    // };
+
+    for (int i = 0; i < mat_size; i++)
+    {
+      for (int j = 0; j < mat_size; j++)
+      {
+        cin >> *(matrix + i * count_y + j);
+      }
+    }
+
+    for (int i = 0; i < mat_size; i++)
+    {
+      for (int j = mat_size; j < (mat_size) * 2; j++)
+      {
+        if (i + mat_size == j)
+        {
+          *(matrix + i * count_y + j) = 1;
+        }
+        else
+        {
+          *(matrix + i * count_y + j) = 0;
+        }
+      }
+    }
+
+    // memcpy(matrix, test_matrix, count_x * count_y * sizeof(double));
+
+    // printMatrix(matrix, count_y, count_x);
   }
+
+  MPI_Barrier(MPI_COMM_WORLD);
 
   // Getting the number elmt to send and receive
   int ideal_array_per_proc_step1 = count_y / world_size;
@@ -178,16 +216,20 @@ int main(int argc, char **argv)
   setupOffsetStep2(array_offset, elmt_offset, array_per_proc, world_size, mat_size);
 
   // Init Receive Buffer (this part is independent from each process)
-  double bcastbuff_step1 = {0};
-  double *recvbuff_step1 = (double *)malloc(elmt_per_proc_step1[proc_rank] * sizeof(double));
+  double bcastbuff_step1;
+  double *recvbuff_step1 = (double *)malloc(count_y * sizeof(double));
 
   // Receive buffer for the second step
   double bcastbuff_step2[count_y] = {0};
   double *recvbuff_step2 = (double *)malloc(array_per_proc[proc_rank] * count_y * sizeof(double));
 
+  MPI_Barrier(MPI_COMM_WORLD);
+
   for (int pivot = 0; pivot < mat_size; pivot++)
   {
     // Step 1 - Divide the all row with the pivot elmt
+    MPI_Barrier(MPI_COMM_WORLD);
+
     if (proc_rank == rootproc)
     {
       // init bcast buffer
@@ -196,15 +238,29 @@ int main(int argc, char **argv)
       // cout << "matrix 0" << endl;
       // printMatrix(matrix, 6, 3);
     }
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Bcast(&bcastbuff_step1, 1, MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Scatterv(matrix + pivot * count_y, elmt_per_proc_step1, elmt_offset_step1, MPI_DOUBLE, recvbuff_step1, elmt_per_proc_step1[proc_rank], MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
+    // cout << "I am here" << endl;
+    // if (proc_rank == rootproc) {
+    //   for (int i = 0; i < elmt_per_proc_step1[rootproc]; i++) {
+    //     cout << *(recvbuff_step1 + i) << " ";
+    //   }
+    //   cout << endl;
+    // }
+    MPI_Barrier(MPI_COMM_WORLD);
 
     for (int i = 0; i < elmt_per_proc_step1[proc_rank]; i++)
     {
       *(recvbuff_step1 + i) = *(recvbuff_step1 + i) / bcastbuff_step1;
     }
 
+    MPI_Barrier(MPI_COMM_WORLD);
+
     MPI_Gatherv(recvbuff_step1, elmt_per_proc_step1[proc_rank], MPI_DOUBLE, matrix + pivot * count_y, elmt_per_proc_step1, elmt_offset_step1, MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+
 
     // TODO: Step 2 - Make the upper and lower row to be 0 other than the pivot elmt
     // Prepare pivot row
@@ -213,9 +269,17 @@ int main(int argc, char **argv)
       memcpy(bcastbuff_step2, matrix + (pivot * count_y), count_y * sizeof(double));
     }
 
+    
+    MPI_Barrier(MPI_COMM_WORLD);
+
     // Broadcast pivot row and scatter the rest
     MPI_Bcast(&bcastbuff_step2, count_y, MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+
     MPI_Scatterv(matrix, elmt_per_proc, elmt_offset, MPI_DOUBLE, recvbuff_step2, elmt_per_proc[proc_rank], MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
+    cout << "I am here" << endl;
+    MPI_Barrier(MPI_COMM_WORLD);
+
 
     // // Do the substraction operation with the pivot row
     for (int i = 0; i < array_per_proc[proc_rank]; i++)
@@ -230,15 +294,18 @@ int main(int argc, char **argv)
     }
 
     // // Gather the row back together
+    MPI_Barrier(MPI_COMM_WORLD);
+
     MPI_Gatherv(recvbuff_step2, elmt_per_proc[proc_rank], MPI_DOUBLE, matrix, elmt_per_proc, elmt_offset, MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
 
     // DEBUG purposes only
-    if (proc_rank == rootproc)
-    {
-      cout << "matrix iteration " << pivot + 1  << endl;
-      printMatrix(matrix, 6, 3);
-      cout << endl;
-    }
+    // if (proc_rank == rootproc)
+    // {
+    //   cout << "matrix iteration " << pivot + 1 << endl;
+    //   printMatrix(matrix, count_y, count_x);
+    //   cout << endl;
+    // }
   }
 
   MPI_Finalize();
