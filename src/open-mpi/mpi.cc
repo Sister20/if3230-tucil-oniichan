@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <string.h>
+#include <ctime>
 
 using namespace std;
 
@@ -46,16 +47,26 @@ void clear(double **mat)
 }
 
 // Display a 2d matrix
-void printMatrix(double *matrix, int count_width, int count_row)
+void printMatrix(double *matrix, int count_width, int count_row, int res)
 {
   for (int i = 0; i < count_row; i++)
   {
     for (int j = 0; j < count_width; j++)
     {
-      cout << *(matrix + j + i * count_width) << " ";
-      if (j == (count_width / 2) - 1)
+      if (res)
       {
-        cout << "|";
+        if (j > (count_width / 2) - 1)
+        {
+          cout << *(matrix + j + i * count_width) << " ";
+        }
+      }
+      else
+      {
+        cout << *(matrix + j + i * count_width) << " ";
+        if (j == (count_width / 2) - 1)
+        {
+          cout << "|";
+        }
       }
     }
     cout << endl;
@@ -229,20 +240,11 @@ int main(int argc, char **argv)
   double bcastbuff_step2[count_y] = {0};
   double *recvbuff_step2 = (double *)malloc(array_per_proc[proc_rank] * count_y * sizeof(double));
 
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  cout << "Matrix new" << endl;
-  if (proc_rank == rootproc)
-  {
-    printMatrix(matrix, count_y, count_x);
-    cout << endl;
-  }
+  clock_t start = clock();
 
   for (int pivot = 0; pivot < mat_size; pivot++)
   {
     // Step 1 - Divide the all row with the pivot elmt
-    MPI_Barrier(MPI_COMM_WORLD);
-
     if (proc_rank == rootproc)
     {
       // init bcast buffer
@@ -251,11 +253,8 @@ int main(int argc, char **argv)
       // cout << "matrix 0" << endl;
       // printMatrix(matrix, 6, 3);
     }
-    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Bcast(&bcastbuff_step1, 1, MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Scatterv(matrix + pivot * count_y, elmt_per_proc_step1, elmt_offset_step1, MPI_DOUBLE, recvbuff_step1, elmt_per_proc_step1[proc_rank], MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
 
     for (int i = 0; i < elmt_per_proc_step1[proc_rank]; i++)
     {
@@ -263,9 +262,7 @@ int main(int argc, char **argv)
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-
     MPI_Gatherv(recvbuff_step1, elmt_per_proc_step1[proc_rank], MPI_DOUBLE, matrix + pivot * count_y, elmt_per_proc_step1, elmt_offset_step1, MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
 
     // TODO: Step 2 - Make the upper and lower row to be 0 other than the pivot elmt
     // Prepare pivot row
@@ -278,12 +275,8 @@ int main(int argc, char **argv)
 
     // Broadcast pivot row and scatter the rest
     MPI_Bcast(&bcastbuff_step2, count_y, MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
-
     MPI_Scatterv(matrix, elmt_per_proc, elmt_offset, MPI_DOUBLE, recvbuff_step2, elmt_per_proc[proc_rank], MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
-    // cout << "I am here" << endl;
-    MPI_Barrier(MPI_COMM_WORLD);
-
+    
     // // Do the substraction operation with the pivot row
     for (int i = 0; i < array_per_proc[proc_rank]; i++)
     {
@@ -298,17 +291,31 @@ int main(int argc, char **argv)
 
     // // Gather the row back together
     MPI_Barrier(MPI_COMM_WORLD);
-
     MPI_Gatherv(recvbuff_step2, elmt_per_proc[proc_rank], MPI_DOUBLE, matrix, elmt_per_proc, elmt_offset, MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
+
+    // // DEBUG purposes only
+    // if (proc_rank == rootproc)
+    // {
+    //   cout << "matrix iteration " << pivot + 1 << endl;
+    //   printMatrix(matrix, count_y, count_x);
+    //   cout << endl;
+    // }
 
     // DEBUG purposes only
-    if (proc_rank == rootproc)
-    {
-      cout << "matrix iteration " << pivot + 1 << endl;
-      printMatrix(matrix, count_y, count_x);
-      cout << endl;
-    }
+    // if (proc_rank == rootproc)
+    // {
+    //   cout << "matrix iteration " << pivot + 1 << endl;
+    //   printMatrix(matrix, count_y, count_x);
+    //   cout << endl;
+    // }
+  }
+
+  if (proc_rank == rootproc)
+  {
+    cout << double(clock() - start) / CLOCKS_PER_SEC * 1000 << endl;
+    cout << mat_size << endl;
+    printMatrix(matrix, count_y, count_x, 1);
+    cout << endl;
   }
 
   MPI_Finalize();
