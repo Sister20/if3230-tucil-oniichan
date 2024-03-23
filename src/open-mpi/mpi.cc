@@ -229,19 +229,16 @@ int main(int argc, char **argv)
   double bcastbuff_step2[count_y] = {0};
   double *recvbuff_step2 = (double *)malloc(array_per_proc[proc_rank] * count_y * sizeof(double));
 
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  cout << "Matrix new" << endl;
-  if (proc_rank == rootproc)
-  {
-    printMatrix(matrix, count_y, count_x);
-    cout << endl;
-  }
+  // cout << "Matrix new" << endl;
+  // if (proc_rank == rootproc)
+  // {
+  //   printMatrix(matrix, count_y, count_x);
+  //   cout << endl;
+  // }
 
   for (int pivot = 0; pivot < mat_size; pivot++)
   {
     // Step 1 - Divide the all row with the pivot elmt
-    MPI_Barrier(MPI_COMM_WORLD);
 
     if (proc_rank == rootproc)
     {
@@ -303,13 +300,19 @@ int main(int argc, char **argv)
     MPI_Barrier(MPI_COMM_WORLD);
 
     // DEBUG purposes only
-    if (proc_rank == rootproc)
-    {
-      cout << "matrix iteration " << pivot + 1 << endl;
-      printMatrix(matrix, count_y, count_x);
-      cout << endl;
-    }
+    // if (proc_rank == rootproc)
+    // {
+    //   cout << "matrix iteration " << pivot + 1 << endl;
+    //   printMatrix(matrix, count_y, count_x);
+    //   cout << endl;
+    // }
   }
+
+  // if (proc_rank == rootproc)
+  // {
+  //   printMatrix(matrix, count_y, count_x);
+  //   cout << endl;
+  // }
 
   MPI_Finalize();
   return 0;

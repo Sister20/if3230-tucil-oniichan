@@ -83,15 +83,15 @@ int main()
         }
     }
     
-    cout << n << endl;
-    for(i=0; i < n; ++i)
-    {
-        for(j = n; j < 2*n; ++j)
-        {
-            cout << mat[i][j] << " ";
-        }
-        cout << endl;
-    }
+    // cout << n << endl;
+    // for(i=0; i < n; ++i)
+    // {
+    //     for(j = n; j < 2*n; ++j)
+    //     {
+    //         cout << mat[i][j] << " ";
+    //     }
+    //     cout << endl;
+    // }
     
     // Deleting the memory allocated
     for (i = 0; i < n; ++i)
