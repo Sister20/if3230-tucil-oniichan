@@ -140,9 +140,9 @@ int main(int argc, char **argv)
   int rootproc = 0;
 
   // Getting the matrix size
-  int mat_size = 8;
-  int count_x = mat_size;
-  int count_y = mat_size * 2;
+  int mat_size;
+  int count_x;
+  int count_y;
 
   // init matrix as pointer
   double *matrix;
@@ -152,6 +152,8 @@ int main(int argc, char **argv)
     // getting the matrix
     // TODO: Change it using the parser lib when done
     cin >> mat_size;
+    count_x = mat_size;
+    count_y = mat_size * 2;
     matrix = (double *)malloc(count_x * count_y * sizeof(double));
 
     // double test_matrix[count_x][count_y] = {
@@ -194,6 +196,10 @@ int main(int argc, char **argv)
   }
 
   MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Bcast(&mat_size, 1, MPI_INT, rootproc, MPI_COMM_WORLD);
+  MPI_Bcast(&count_x, 1, MPI_INT, rootproc, MPI_COMM_WORLD);
+  MPI_Bcast(&count_y, 1, MPI_INT, rootproc, MPI_COMM_WORLD);
+  MPI_Barrier(MPI_COMM_WORLD);
 
   // Getting the number elmt to send and receive
   int ideal_array_per_proc_step1 = count_y / world_size;
@@ -225,6 +231,13 @@ int main(int argc, char **argv)
 
   MPI_Barrier(MPI_COMM_WORLD);
 
+  cout << "Matrix new" << endl;
+  if (proc_rank == rootproc)
+  {
+    printMatrix(matrix, count_y, count_x);
+    cout << endl;
+  }
+
   for (int pivot = 0; pivot < mat_size; pivot++)
   {
     // Step 1 - Divide the all row with the pivot elmt
@@ -242,13 +255,6 @@ int main(int argc, char **argv)
     MPI_Bcast(&bcastbuff_step1, 1, MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Scatterv(matrix + pivot * count_y, elmt_per_proc_step1, elmt_offset_step1, MPI_DOUBLE, recvbuff_step1, elmt_per_proc_step1[proc_rank], MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
-    // cout << "I am here" << endl;
-    // if (proc_rank == rootproc) {
-    //   for (int i = 0; i < elmt_per_proc_step1[rootproc]; i++) {
-    //     cout << *(recvbuff_step1 + i) << " ";
-    //   }
-    //   cout << endl;
-    // }
     MPI_Barrier(MPI_COMM_WORLD);
 
     for (int i = 0; i < elmt_per_proc_step1[proc_rank]; i++)
@@ -261,7 +267,6 @@ int main(int argc, char **argv)
     MPI_Gatherv(recvbuff_step1, elmt_per_proc_step1[proc_rank], MPI_DOUBLE, matrix + pivot * count_y, elmt_per_proc_step1, elmt_offset_step1, MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
 
-
     // TODO: Step 2 - Make the upper and lower row to be 0 other than the pivot elmt
     // Prepare pivot row
     if (proc_rank == rootproc)
@@ -269,7 +274,6 @@ int main(int argc, char **argv)
       memcpy(bcastbuff_step2, matrix + (pivot * count_y), count_y * sizeof(double));
     }
 
-    
     MPI_Barrier(MPI_COMM_WORLD);
 
     // Broadcast pivot row and scatter the rest
@@ -277,9 +281,8 @@ int main(int argc, char **argv)
     MPI_Barrier(MPI_COMM_WORLD);
 
     MPI_Scatterv(matrix, elmt_per_proc, elmt_offset, MPI_DOUBLE, recvbuff_step2, elmt_per_proc[proc_rank], MPI_DOUBLE, rootproc, MPI_COMM_WORLD);
-    cout << "I am here" << endl;
+    // cout << "I am here" << endl;
     MPI_Barrier(MPI_COMM_WORLD);
-
 
     // // Do the substraction operation with the pivot row
     for (int i = 0; i < array_per_proc[proc_rank]; i++)
@@ -300,12 +303,12 @@ int main(int argc, char **argv)
     MPI_Barrier(MPI_COMM_WORLD);
 
     // DEBUG purposes only
-    // if (proc_rank == rootproc)
-    // {
-    //   cout << "matrix iteration " << pivot + 1 << endl;
-    //   printMatrix(matrix, count_y, count_x);
-    //   cout << endl;
-    // }
+    if (proc_rank == rootproc)
+    {
+      cout << "matrix iteration " << pivot + 1 << endl;
+      printMatrix(matrix, count_y, count_x);
+      cout << endl;
+    }
   }
 
   MPI_Finalize();
