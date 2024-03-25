@@ -1,11 +1,19 @@
 MPI_CC = mpicc
 THREADS = 2
-OUTPUT_FOLDER = bin
+OUTPUT_FOLDER = output
+BIN_FOLDER = bin
+
 
 all: serial parallel
 
-parallel:
-	mpic++ src/open-mpi/mpi.cc -o $(OUTPUT_FOLDER)/mpi.exe
+parallel: mpi
+
+mpi:
+	mpic++ src/open-mpi/mpi.cc -o $(BIN_FOLDER)/mpi.exe
 
 serial:
-	g++ src/serial/serial.cpp -o $(OUTPUT_FOLDER)/serial.exe
+	g++ src/serial/serial.cpp -o $(BIN_FOLDER)/serial.exe
+
+run:
+	time ./bin/serial.exe < test_cases/2048.txt > $(OUTPUT_FOLDER)/output_serial.txt
+	time mpiexec -n $(N) ./bin/mpi.exe < test_cases/2048.txt > $(OUTPUT_FOLDER)/output_mpi.txt
