@@ -12,6 +12,6 @@ parallel:
 serial:
 	g++ src/serial/serial.cpp -o $(BIN_FOLDER)/serial.exe
 
-run:  serial parallel
-	time ./bin/serial.exe < test_cases/1024.txt > $(OUTPUT_FOLDER)/output_serial.txt
-	time mpiexec -n $(N) ./bin/mpi.exe < test_cases/1024.txt > $(OUTPUT_FOLDER)/output_mpi.txt
+run:
+	time ./bin/serial.exe < test_cases/2048.txt > $(OUTPUT_FOLDER)/output_serial.txt
+	time mpiexec -n $(N) ./bin/mpi.exe < test_cases/2048.txt > $(OUTPUT_FOLDER)/output_mpi.txt
