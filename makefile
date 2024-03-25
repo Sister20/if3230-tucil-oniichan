@@ -6,7 +6,9 @@ BIN_FOLDER = bin
 
 all: serial parallel
 
-parallel:
+parallel: mpi
+
+mpi:
 	mpic++ src/open-mpi/mpi.cc -o $(BIN_FOLDER)/mpi.exe
 
 serial:
