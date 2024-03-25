@@ -56,5 +56,3 @@ To run the algorithm, follow these steps:
 ## References
 - [Gauss-Jordan elimination](https://en.wikipedia.org/wiki/Gauss%E2%80%93Jordan_elimination)
 - [MPI - Message Passing Interface](https://www.mpi-forum.org/)
-
-By following these instructions, you should be able to successfully execute the parallel inverse matrix algorithm using the Gauss-Jordan method with MPI.
