@@ -6,10 +6,13 @@ BIN_FOLDER = bin
 
 all: serial parallel
 
-parallel: mpi
+parallel: mpi mp
 
 mpi:
 	mpic++ src/open-mpi/mpi.cc -o $(BIN_FOLDER)/mpi.exe
+
+mp: 
+	g++ src/open-mp/mp.cc --openmp -o $(BIN_FOLDER)/mp
 
 serial:
 	g++ src/serial/serial.cpp -o $(BIN_FOLDER)/serial.exe
@@ -17,3 +20,4 @@ serial:
 run:
 	time ./bin/serial.exe < test_cases/2048.txt > $(OUTPUT_FOLDER)/output_serial.txt
 	time mpiexec -n $(N) ./bin/mpi.exe < test_cases/2048.txt > $(OUTPUT_FOLDER)/output_mpi.txt
+	time ./bin/mp < test_cases/1024.txt > $(OUTPUT_FOLDER)/output_mp.txt
