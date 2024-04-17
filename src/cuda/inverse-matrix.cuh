@@ -2,6 +2,6 @@
 
 __global__ void calculateInverse(double* matrix_pointer, int width, int height, int currRow);
 
-__device__ void step1(double* matrix_pointer, int width, int height, int currRow, double diagonal);
+__global__ void step1(double* matrix_pointer, int width, int height, int currRow);
 
-__device__ void step2(double* matrix_pointer, int width, int height, int currRow, double diagonal);
+__global__ void step2(double* matrix_pointer, int width, int height, int currRow);
