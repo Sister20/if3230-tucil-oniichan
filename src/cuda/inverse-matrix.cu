@@ -3,16 +3,16 @@
 
 using namespace std;
 
-__global__ void calculateInverse(double *matrix_pointer, int width, int height, int currRow)
-{
-  __shared__ double diagonal;
-  diagonal = matrix_pointer[width * currRow + currRow];
-  __syncthreads();
+// __global__ void calculateInverse(double *matrix_pointer, int width, int height, int currRow)
+// {
+//   __shared__ double diagonal;
+//   diagonal = matrix_pointer[width * currRow + currRow];
+//   __syncthreads();
 
-  // step1(matrix_pointer, width, height, currRow, diagonal);
-  __syncthreads();
-  // step2(matrix_pointer, width, height, currRow, diagonal);
-}
+//   // step1(matrix_pointer, width, height, currRow, diagonal);
+//   __syncthreads();
+//   // step2(matrix_pointer, width, height, currRow, diagonal);
+// }
 
 __global__ void step1(double *matrix_pointer, int width, int height, int currRow)
 {
@@ -67,7 +67,7 @@ __global__ void step2(double *matrix_pointer, int width, int height, int currRow
 
       matrix_pointer[idx] = before - multiplier * pivotElmt;
 
-      double after = matrix_pointer[idx];
+      // double after = matrix_pointer[idx];
 
       // printf("iteration: %d, Col: %d, Row: %d, Multiplier: %.15f, pivotElmt %.15f, before %.15f, after %.15f, height %d width %d\n", currRow, col, row_idx, multiplier, pivotElmt, before, after, height, width);
     }

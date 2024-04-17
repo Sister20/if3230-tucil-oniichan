@@ -25,5 +25,8 @@ run:
 	time mpiexec -n $(N) ./bin/mpi.exe < test_cases/2048.txt > $(OUTPUT_FOLDER)/output_mpi.txt
 	time ./bin/mp < test_cases/1024.txt > $(OUTPUT_FOLDER)/output_mp.txt
 
+run-serial:
+	time ./bin/serial.exe < test_cases/2048.txt > $(OUTPUT_FOLDER)/output_serial.txt
+
 run-cuda:
-	time ./bin/cuda.exe < test_cases/2048.txt > $(OUTPUT_FOLDER)/output_cuda.txt
+	time ./bin/cuda.exe < test_cases/1024.txt > $(OUTPUT_FOLDER)/output_cuda.txt
