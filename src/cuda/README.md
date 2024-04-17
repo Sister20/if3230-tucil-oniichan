@@ -1,6 +1,6 @@
 # Parallel Inverse Matrix Algorithm using Gauss-Jordan with Cuda
 
-This README provides a comprehensive overview of an algorithm for efficiently computing the inverse of a matrix using the Gauss-Jordan method with MPI (Message Passing Interface) for parallelization. The algorithm divides the Gauss-Jordan elimination into two major steps that can be parallelized, significantly improving computational efficiency.
+The provided program implements matrix inversion using GPU acceleration with CUDA. It consists of two main parts: the host code (in cuda.cu) and the device code (in inverse-matrix.cuh and inverse-matrix.cu).
 
 ## Algorithm Overview
 
