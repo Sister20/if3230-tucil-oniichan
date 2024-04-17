@@ -32,8 +32,8 @@ __global__ void step1(double *matrix_pointer, int width, int height, int currRow
 __global__ void step2(double *matrix_pointer, int width, int height, int currRow)
 {
   int row_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  __syncthreads();
   // int col_idx = blockIdx.y * blockDim.y + threadIdx.y;
+  __syncthreads();
 
   // if (row_idx != currRow && row_idx < height && col_idx < width && col_idx >= currRow) {
   //     int pivotAdjIdx = row_idx * width + currRow;

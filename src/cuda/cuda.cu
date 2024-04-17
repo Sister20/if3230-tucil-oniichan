@@ -9,7 +9,7 @@ void printMatrix(double *matrix, int count_width, int count_row, int res)
 {
   for (int i = 0; i < count_row; i++)
   {
-    for (int j = 0; j < count_width; j++)
+    for (int j = count_row; j < count_width; j++)
     {
       if (res)
       {
@@ -67,13 +67,16 @@ int main(int argc, char **argv)
   dim3 blockDim(16);
   dim3 gridDim((count_y + blockDim.x - 1) / blockDim.x);
 
+  // dim3 blockDim(16, 16);
+  // dim3 gridDim((count_y + blockDim.x - 1) / blockDim.x, (count_x + blockDim.y - 1) / blockDim.y);
+
   double *device_matrix_pointer;
 
   cudaMalloc((void **)&device_matrix_pointer, count_x * count_y * sizeof(double));
   cudaMemcpy(device_matrix_pointer, matrix, count_x * count_y * sizeof(double), cudaMemcpyHostToDevice);
 
-  printf("grid.x %d grid.y %d grid.z %d\n", gridDim.x, gridDim.y, gridDim.z);
-  printf("block.x %d block.y %d block.z %d\n", blockDim.x, blockDim.y, blockDim.z);
+  // printf("grid.x %d grid.y %d grid.z %d\n", gridDim.x, gridDim.y, gridDim.z);
+  // printf("block.x %d block.y %d block.z %d\n", blockDim.x, blockDim.y, blockDim.z);
 
   for (int i = 0; i < count_x; i++)
   {
