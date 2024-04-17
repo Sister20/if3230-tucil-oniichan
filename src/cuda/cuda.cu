@@ -65,8 +65,8 @@ int main(int argc,char **argv)
   }
 
 
-  dim3 blockDim(16, 16);
-  dim3 gridDim((count_y + blockDim.x - 1) / blockDim.x, (count_x + blockDim.y - 1) / blockDim.y);
+  dim3 blockDim(16);
+  dim3 gridDim((count_y + blockDim.x - 1) / blockDim.x);
 
   double *device_matrix_pointer;
 
@@ -78,6 +78,7 @@ int main(int argc,char **argv)
 
   for (int i = 0; i < count_x; i++) {
     calculateInverse<<<blockDim,gridDim>>>(device_matrix_pointer, count_y, count_x, i);
+    cudaDeviceSynchronize();
   }
 
   cudaMemcpy(matrix, device_matrix_pointer, count_x * count_y * sizeof(double), cudaMemcpyDeviceToHost);

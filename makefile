@@ -26,4 +26,4 @@ run:
 	time ./bin/mp < test_cases/1024.txt > $(OUTPUT_FOLDER)/output_mp.txt
 
 run-cuda:
-	time ./bin/cuda.exe < test_cases/4.txt > $(OUTPUT_FOLDER)/output_cuda.txt
+	time ./bin/cuda.exe < test_cases/2048.txt > $(OUTPUT_FOLDER)/output_cuda.txt
